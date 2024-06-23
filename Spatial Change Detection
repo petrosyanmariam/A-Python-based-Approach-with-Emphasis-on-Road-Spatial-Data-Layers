@@ -1,0 +1,69 @@
+import arcpy
+
+def detect_changes(base_line, update_line, output_fc):
+    # Set environment settings
+    arcpy.env.workspace = r"C:data"
+
+    # Check if base line layer exists and has features
+    if not arcpy.Exists(base_line):
+        print(f"Error: Base line layer '{base_line}' does not exist.")
+        return
+    base_count = arcpy.GetCount_management(base_line)[0]
+    if int(base_count) == 0:
+        print(f"Error: Base line layer '{base_line}' has no features.")
+        return
+    
+    # Check if update line layer exists and has features
+    if not arcpy.Exists(update_line):
+        print(f"Error: Update line layer '{update_line}' does not exist.")
+        return
+    update_count = arcpy.GetCount_management(update_line)[0]
+    if int(update_count) == 0:
+        print(f"Error: Update line layer '{update_line}' has no features.")
+        return
+
+    # Create output feature class schema
+    arcpy.management.CreateFeatureclass(
+        arcpy.env.workspace,
+        output_fc,
+        "POLYLINE",
+        spatial_reference=arcpy.Describe(base_line).spatialReference
+    )
+    arcpy.management.AddField(output_fc, "Change_Type", "TEXT", field_length=50)
+    with arcpy.da.InsertCursor(output_fc, ["SHAPE@", "Change_Type"]) as cursor:
+        # Loop through base features and check for matches in update features
+        with arcpy.da.SearchCursor(base_line, "SHAPE@") as base_cursor:
+            for base_row in base_cursor:
+                base_geom = base_row[0]
+                matched = False
+                # Check for matching features in update line
+                with arcpy.da.SearchCursor(update_line, "SHAPE@") as update_cursor:
+                    for update_row in update_cursor:
+                        update_geom = update_row[0]
+                        if base_geom.equals(update_geom):
+                            matched = True
+                            break
+                if not matched:
+                    cursor.insertRow((base_geom, "Unmatched Base"))
+        # Loop through update features and check for unmatched features
+        with arcpy.da.SearchCursor(update_line, "SHAPE@") as update_cursor:
+            for update_row in update_cursor:
+                update_geom = update_row[0]
+                matched = False
+                # Check for matching features in base line
+                with arcpy.da.SearchCursor(base_line, "SHAPE@") as base_cursor:
+                    for base_row in base_cursor:
+                        base_geom = base_row[0]
+                        if update_geom.equals(base_geom):
+                            matched = True
+                            break
+                if not matched:
+                    cursor.insertRow((update_geom, "Unmatched Update"))
+
+    print(f"Change detection layer created: {output_fc}")
+
+# Example usage:
+base_line = "Poly1"
+update_line = "Poly2"
+output_fc = "change_detection"
+detect_changes(base_line, update_line, output_fc)
