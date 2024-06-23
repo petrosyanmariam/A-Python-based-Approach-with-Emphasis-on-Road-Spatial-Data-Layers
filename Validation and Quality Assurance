@@ -1,0 +1,15 @@
+# Load ground-truth data or authoritative sources
+ground_truth = gpd.read_file('ground_truth.shp')
+
+# Spatial join and validate against ground-truth
+joined_data = gpd.sjoin(integrated_data, ground_truth, how='inner', op='intersects')
+
+# Perform error analysis and rectify discrepancies
+errors = []
+
+for idx, row in joined_data.iterrows():
+    if not row['geometry'].equals(row['geometry_right']):
+        errors.append((row['geometry'], row['geometry_right']))
+
+# Correct errors in the integrated road network
+# (You may need additional data or manual intervention to correct errors)
