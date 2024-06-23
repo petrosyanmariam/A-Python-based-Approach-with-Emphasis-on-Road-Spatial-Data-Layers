@@ -1,0 +1,42 @@
+import geopandas as gpd
+
+# Load the two road layers as GeoDataFrames
+road_layer1 = gpd.read_file('road_layer1.shp')
+road_layer2 = gpd.read_file('road_layer2.shp')
+
+# Detect gaps
+gaps = gpd.overlay(road_layer1, road_layer2, how='symmetric_difference')
+
+# Detect overlaps
+overlaps = gpd.overlay(road_layer1, road_layer2, how='intersection')
+
+# Detect dangles
+dangles = road_layer1[~road_layer1.intersects(road_layer2.unary_union)]
+
+# Detect disconnected networks
+# Perform network analysis to identify connected components
+network_components = gpd.overlay(road_layer1, road_layer2, how='union')
+disconnected_networks = network_components[network_components.geometry.is_empty]
+
+# Detect topology inconsistencies
+# You may need to compare the topology of both layers, for example, by comparing node connectivity
+# This could involve graph theory algorithms or other spatial analysis methods
+
+# Detect invalid geometries
+invalid_geometries = road_layer1[~road_layer1.is_valid]
+
+# Detect duplicate features
+duplicate_features = road_layer1[road_layer1.duplicated()]
+
+# Detect invalid junctions
+# Junctions can be detected by finding road segments with more than 2 intersections
+# or by checking for gaps and overlaps at junction points
+
+# Print or visualize the results
+print("Gaps:", len(gaps))
+print("Overlaps:", len(overlaps))
+print("Dangles:", len(dangles))
+print("Disconnected Networks:", len(disconnected_networks))
+print("Invalid Geometries:", len(invalid_geometries))
+print("Duplicate Features:", len(duplicate_features))
+# You can further explore the detected features or visualize them for detailed inspection
