@@ -1,0 +1,31 @@
+import geopandas as gpd
+
+# Path to the geodatabase file
+geodatabase_path = r'C:\data'
+
+# Layer names
+layer1_name = 'Roads'
+layer2_name = 'Roads2'
+
+# Load the two road layers as GeoDataFrames
+road_layer1 = gpd.read_file(geodatabase_path, layer=layer1_name)
+road_layer2 = gpd.read_file(geodatabase_path, layer=layer2_name)
+
+# Get column names and data types of each GeoDataFrame
+layer1_columns = road_layer1.columns
+layer2_columns = road_layer2.columns
+layer1_dtypes = road_layer1.dtypes
+layer2_dtypes = road_layer2.dtypes
+
+# Compare column names
+if set(layer1_columns) != set(layer2_columns):
+    print("Attribute schema incompatibility: Column names do not match.")
+    print("Columns in layer 1:", layer1_columns)
+    print("Columns in layer 2:", layer2_columns)
+
+# Compare data types
+for column in layer1_columns:
+    if layer1_dtypes[column] != layer2_dtypes[column]:
+        print(f"Attribute schema incompatibility: Data types for column '{column}' do not match.")
+        print(f"Data type in layer 1: {layer1_dtypes[column]}")
+        print(f"Data type in layer 2: {layer2_dtypes[column]}")
